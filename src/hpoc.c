@@ -9,13 +9,13 @@
 typedef struct {
     size_t prev_size;
     size_t size : 61;
-    bool NON_MAIN_ARENA : 1;
-    bool IS_MMAPED : 1;
-    bool PREV_INUSE : 1;
-    chunk *fd;              // Only used if chunk is free
-    chunk *bk;              // Only used if chunk is free
-    chunk *fd_nextsize;     // Only used if chunk is free
-    chunk *bk_nextsize;     // Only used if chunk is free
+    size_t NON_MAIN_ARENA : 1;
+    size_t IS_MMAPED : 1;
+    size_t PREV_INUSE : 1;
+    struct chunk *fd;              // Only used if chunk is free
+    struct chunk *bk;              // Only used if chunk is free
+    struct chunk *fd_nextsize;     // Only used if chunk is free
+    struct chunk *bk_nextsize;     // Only used if chunk is free
 }chunk;
 
 #define chunk2mem(p)    (void *)((char *)(p) + 2 * sizeof(size_t))
@@ -41,15 +41,18 @@ void hpoc_init() {
     char *ptr = (char *)mmap(0, INITIAL_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     
     main_arena.top_chunk = (chunk *)ptr;
-    main_arena.top_chunk->size = INITIAL_SIZE;
+    main_arena.top_chunk->size = INITIAL_SIZE >> 3;
     main_arena.top_chunk->IS_MMAPED = true;
     main_arena.top_chunk->PREV_INUSE = true;
 }
 
-void *malloc(size_t size) {
+void *hmalloc(size_t size) {
     // If the top chunk is out of memory
-    if (main_arena.top_chunk->size == 0)
+    if (!main_arena.top_chunk)
         hpoc_init();
+    
+    printf("sizeof(chunk): %ld\n", sizeof(chunk));
+
 
     // If the tcache for the requested size isn't empty, return the HEAD
 

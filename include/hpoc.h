@@ -1,2 +1,2 @@
-void *malloc(size_t size);
-void free(void *ptr);
+void *hmalloc(size_t size);
+void hfree(void *ptr);
