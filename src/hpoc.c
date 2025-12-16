@@ -43,11 +43,11 @@ typedef struct {
 static arena main_arena = {0};
 
 
-
 void hpoc_init() {
-    sbrk()
     char *ptr = (char *)mmap(0, INITIAL_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     main_arena.top_chunk = (a_chunk) {0, INITIAL_SIZE, 0, 0, 1};
+
+    
 }
 
 void *malloc(size_t size) {
