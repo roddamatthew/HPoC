@@ -3,7 +3,7 @@
 #include <sys/mman.h>
 #include "hpoc.h"
 
-#define INITIAL_SIZE 0x40000
+#define INITIAL_SIZE 4 * 1024 * 1024 * 1024 * 1024
 #define STRETCH_SIZE 0x40000
 
 typedef struct {
