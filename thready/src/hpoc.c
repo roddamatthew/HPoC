@@ -46,12 +46,17 @@ void hpoc_init() {
     main_arena.top_chunk->PREV_INUSE = true;
 }
 
+// TODO: implement extending the top chunk
+void hpoc_extend()
+{
+    // mmap(top_chunk + top_chunk->size, EXTEND_SIZE, ...);
+    return;
+}
+
 void *hmalloc(size_t size) {
-    // If the top chunk is out of memory
+    // If this is the first call, initialize the heap
     if (!main_arena.top_chunk)
         hpoc_init();
-    
-    printf("sizeof(chunk): %ld\n", sizeof(chunk));
 
 
     // If the tcache for the requested size isn't empty, return the HEAD
