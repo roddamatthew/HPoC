@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#define INITIAL_SIZE 0x40000
-#define STRETCH_SIZE 0x40000
+#define INITIAL_SIZE (0x40000UL)
+#define STRETCH_SIZE (0x40000UL)
 
 typedef struct {
     size_t prev_size;
@@ -19,3 +19,5 @@ typedef struct {
 
 #define chunk2mem(p)    ((void *)((uint64_t)(p) + 16))
 #define mem2chunk(p)    ((chunk*)((uint64_t)(p) - 16))
+#define nextchunk(p)    ((chunk*)((uint64_t)p + p->size))
+#define prevchunk(p)    ((chunk*)((uint64_t)p - p->prev_size))
