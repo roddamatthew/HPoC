@@ -3,7 +3,7 @@
 #include <sys/mman.h>
 #include "hpoc.h"
 
-#define INITIAL_SIZE 4 * 1024 * 1024 * 1024 * 1024
+#define INITIAL_SIZE 0x40000
 #define STRETCH_SIZE 0x40000
 
 typedef struct {
@@ -40,6 +40,11 @@ static arena main_arena = {0};
 void hpoc_init() {
     char *ptr = (char *)mmap(0, INITIAL_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     
+    if (ptr == MAP_FAILED) {
+        perror("Couldn't mmap requested size");
+        exit(1);
+    }
+
     main_arena.top_chunk = (chunk *)ptr;
     main_arena.top_chunk->size = INITIAL_SIZE >> 3;
     main_arena.top_chunk->IS_MMAPED = true;

@@ -1,3 +1,4 @@
-#include "chunk.h"
+#include <stdlib.h>
 
-int test();
+void* hmalloc(size_t size);
+void hfree(void* ptr);
