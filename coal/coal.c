@@ -1,5 +1,8 @@
 #include <stdlib.h>
+#include <stdbool.h>
+#include <assert.h>
 #include <sys/mman.h>
+#include <sys/types.h>
 #include "../include/chunk.h"
 
 static chunk* top_chunk = NULL;
@@ -25,7 +28,7 @@ static void init_allocator()
 static chunk* find_free_chunk(uint64_t size)
 {
     chunk* curr_chunk = free_list;
-    while(curr_chunk) {
+    while (curr_chunk) {
         if (curr_chunk->size >= size) {
             return curr_chunk;
         }
@@ -116,17 +119,35 @@ static chunk* allocate_from_free_list(chunk* free_chunk, size_t new_chunk_size)
     return chunk2mem(new_chunk);
 }
 
-// Coalesce neighboring free heap chunks to reduce fragmentation
-static void coalesce()
+static bool chunk_in_free_list(chunk* c)
 {
-    // PLAN:
-    // Iterate through the free list
-    // Check PREV_INUSE
-    // If zero, then move back 
-
     chunk* curr_chunk = free_list;
-    while(curr_chunk) {
+    while (curr_chunk) {
+        if (curr_chunk == c) {
+            return true;
+        }
+        curr_chunk = (chunk*)curr_chunk->fd;
+    }
+    return false;
+}
 
+// Coalesce neighboring free heap chunks to reduce fragmentation
+static void backward_coalesce()
+{
+    chunk* curr_chunk = free_list;
+    while (curr_chunk) {
+        // If the previous chunk in memory is also free, it can be coalesced
+        if (!curr_chunk->PREV_INUSE) {
+            // Extend the previous chunk in memory
+            chunk* prev_chunk = (chunk*)((uint64_t)curr_chunk - curr_chunk->prev_size);
+            prev_chunk->size += curr_chunk->size;
+
+            // Delete the now non-existent chunk
+            pop_free_chunk(curr_chunk);
+
+            // Debug :P
+            assert(chunk_in_free_list(prev_chunk));
+        }
 
         curr_chunk = (chunk*)curr_chunk->fd;
     }
@@ -136,6 +157,10 @@ void* hmalloc(size_t size)
 {
     if (!top_chunk) {
         init_allocator();
+    }
+
+    if (free_list) {
+        backward_coalesce();
     }
 
     // Round up to nearest 16-byte size
@@ -156,6 +181,9 @@ void* hmalloc(size_t size)
 void hfree(void* ptr)
 {
     chunk* free_chunk = mem2chunk(ptr);
+    chunk* next_chunk = (chunk*)((uint64_t)free_chunk + free_chunk->size);
+    next_chunk->PREV_INUSE = 0;
+    
     free_list_append(free_chunk);
 }
 

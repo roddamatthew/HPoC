@@ -19,7 +19,7 @@ int main()
     hfree((void*)ptr2);
     hfree((void*)ptr1);
     print_free_list();
-    uint64_t ptr4 = (uint64_t)hmalloc(32);
+    uint64_t ptr4 = (uint64_t)hmalloc(40);
     print_free_list();
 
     assert(ptr1 == ptr4);
