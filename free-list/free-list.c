@@ -35,22 +35,33 @@ static chunk* find_free_chunk(uint64_t size)
     return NULL;
 }
 
-static void drop_free_chunk(chunk* c)
+// Pop a chunk from the free_list by updated its neighbors fd and bk pointers
+static void pop_free_chunk(chunk* c)
 {
-    chunk* curr_chunk = free_list;
-    while(curr_chunk) {
-        if (curr_chunk == c) {
-            if (c->bk) {
-                ((chunk *)(c->bk))->fd = c->fd;
-            }
-            if (c->fd) {
-                ((chunk *)(c->fd))->bk = c->bk;
-            }
-            return;
-        }
-
-        curr_chunk = (chunk *)curr_chunk->fd;
+    if (free_list == c) {
+        free_list = (chunk*)c->fd;
     }
+    
+    if (c->bk) {
+        ((chunk *)(c->bk))->fd = c->fd;
+    }
+    if (c->fd) {
+        ((chunk *)(c->fd))->bk = c->bk;
+    }
+}
+
+// Append to the front of the list
+static void free_list_append(chunk* c)
+{
+    // Update the backwards pointer if the free list isn't NULL
+    if (free_list) {
+        free_list->bk = (uint64_t)c;
+    }
+
+    // Append the new chunk to the front of the list
+    c->bk = (uint64_t)NULL;
+    c->fd = (uint64_t)free_list;
+    free_list = c;
 }
 
 // Allocate a new chunk from the top chunk
@@ -79,19 +90,30 @@ static chunk* allocate_from_free_list(chunk* free_chunk, size_t new_chunk_size)
     // Allocate from the front of the existing chunk
     chunk* new_chunk = free_chunk;
 
-    // TODO:
-    free_chunk = (chunk*)((uint64_t)free_chunk + new_chunk_size);
+    // Check if this new allocation takes the whole free chunk
+    // If we would've been left with a 2 byte chunk, include it in new_chunk
+    if (new_chunk_size == free_chunk->size) {
+        pop_free_chunk(free_chunk);
+        return chunk2mem(new_chunk);
+    }
 
+    // Otherwise we have some leftover data
+    // Bump the free_chunk forward
+    size_t new_free_chunk_size = free_chunk->size - new_chunk_size;
+    chunk* new_free_chunk = (chunk*)((uint64_t)free_chunk + new_chunk_size);
+    new_free_chunk->prev_size = new_chunk_size;
+    new_free_chunk->size = new_free_chunk_size;
+    new_free_chunk->NON_MAIN_ARENA = 0;
+    new_free_chunk->IS_MMAPPED = 1;
+    new_free_chunk->PREV_INUSE = 1;
 
-    
-    // update the free chunk size
-    // update the free chunk location
-    // update the free list to point to the free_chunk
-    // check if there's even a free_chunk leftover
+    // Remove the old free chunk
+    pop_free_chunk(free_chunk);
+    free_list_append(new_free_chunk);
 
     // Fill in the new chunk's attributes
     new_chunk->size = new_chunk_size;
-    return chunk2mem(new_chunk)
+    return chunk2mem(new_chunk);
 }
 
 void* hmalloc(size_t size)
@@ -114,20 +136,6 @@ void* hmalloc(size_t size)
     return allocate_from_top_chunk(chunk_size);
 }
 
-// Append to the front of the list
-static void free_list_append(chunk* c)
-{
-    // Update the backwards pointer if the free list isn't NULL
-    if (free_list) {
-        free_list->bk = (uint64_t)c;
-    }
-
-    // Append the new chunk to the front of the list
-    c->bk = (uint64_t)NULL;
-    c->fd = (uint64_t)free_list;
-    free_list = c;
-}
-
 // Place a chunk on the free_list to be allocated from later
 void hfree(void* ptr)
 {
@@ -138,7 +146,11 @@ void hfree(void* ptr)
 void print_free_list()
 {
     chunk* curr_chunk = free_list;
-    while(curr_chunk) {
+    printf("--- FREE LIST STATE: ---\n");
+    for (int i = 0; i < 5; i++) {
+        if (!curr_chunk)
+            break;
+
         printf("free chunk @%p\n", curr_chunk);
         printf("\tprev_size: %lu\n", curr_chunk->prev_size);
         printf("\tsize: %lu\n", curr_chunk->size);

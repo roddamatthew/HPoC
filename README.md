@@ -63,18 +63,18 @@ typedef struct {
 - Every malloc call returns a chunk, where this header data immediately precedes the pointer returned:
     - The header is intentionally small
     - Think of some of the fields you might add if you were more concerned with security than performance?
-    - <details><summary>Possible answers...</summary>`isfree`? `checksum`?</details>
+    - `isfree`? `checksum`?
 
 ## Bump allocator: the `hello world` of heaps:
 - Perhaps the simplest implementation of the heap you could imagine is the following:
-    - You have some contiguous memory with a pointer to the end of it
-    - Every allocation goes to this pointer
-    - The pointer is then incremented
-    - If the pointer ever goes off the end of the heap, allocate more heap memory.
+    - You have some contiguous memory with a pointer to the end of it, `end_ptr`
+    - Every allocation is made at `end_ptr`
+    - `end_ptr` is then incremented by the size of the chunk that was allocated.
+    - If `end_ptr > end_of_heap`, allocate more heap memory.
     - Frees do nothing
 
 ## `free`
-- We want to allow free'd memory to be reused.
+- We want to allow `free`'d memory to be reused.
 - Imagine we have our bump allocator:
     - When free is called, put this chunk in some list
     - When we next allocate, first check the free list
