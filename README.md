@@ -63,7 +63,7 @@ typedef struct {
 - Every malloc call returns a chunk, where this header data immediately precedes the pointer returned:
     - The header is intentionally small
     - Think of some of the fields you might add if you were more concerned with security than performance?
-    - ||`isfree`? `checksum`?|| 
+    - <details><summary>Possible answers...</summary>`isfree`? `checksum`?</details>
 
 ## Bump allocator: the `hello world` of heaps:
 - Perhaps the simplest implementation of the heap you could imagine is the following:
