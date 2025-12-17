@@ -116,6 +116,22 @@ static chunk* allocate_from_free_list(chunk* free_chunk, size_t new_chunk_size)
     return chunk2mem(new_chunk);
 }
 
+// Coalesce neighboring free heap chunks to reduce fragmentation
+static void coalesce()
+{
+    // PLAN:
+    // Iterate through the free list
+    // Check PREV_INUSE
+    // If zero, then move back 
+
+    chunk* curr_chunk = free_list;
+    while(curr_chunk) {
+
+
+        curr_chunk = (chunk*)curr_chunk->fd;
+    }
+}
+
 void* hmalloc(size_t size)
 {
     if (!top_chunk) {

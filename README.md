@@ -7,6 +7,7 @@ Implementing dynamic memory allocator for learning.
     - Implementations increasing in complexity are:
         - [bump](bump/)
         - [free-list](free-list/)
+        - [coal](coal/)
 
 # Notes:
 
