@@ -153,10 +153,11 @@ static void* allocate_from_top_chunk(size_t chunk_size)
     // Bump the top_chunk forward and populate it
     top_chunk = (chunk*)((uint64_t)top_chunk + chunk_size);
     top_chunk->prev_size = chunk_size;
-    top_chunk->size -= chunk_size;
+    top_chunk->size = new_chunk->size - chunk_size;
     top_chunk->NON_MAIN_ARENA = 0;
     top_chunk->IS_MMAPPED = 1;
     top_chunk->PREV_INUSE = 1;
+    print_chunk(top_chunk);
 
     // Fill the new chunk's size
     // Other attributes are already set from previous calls
@@ -235,6 +236,16 @@ static void backward_coalesce()
             assert(!chunk_in_free_list(curr_chunk));
         }
         curr_chunk = (chunk*)curr_chunk->fd;
+    }
+
+    // Finally, try to coalesce into the top chunk
+    if(!top_chunk->PREV_INUSE) {
+        chunk* new_top_chunk = prevchunk(top_chunk);
+        pop_free_chunk(new_top_chunk);
+
+        // Set the new top chunks attributes
+        new_top_chunk->size += top_chunk->size;
+        top_chunk = new_top_chunk;
     }
 }
 
