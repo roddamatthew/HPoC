@@ -16,7 +16,7 @@ static void init_allocator()
     top_chunk->prev_size = 0;
     top_chunk->size = INITIAL_SIZE;
     top_chunk->NON_MAIN_ARENA = 0;
-    top_chunk->IS_MMAPED = 1;
+    top_chunk->IS_MMAPPED = 1;
     top_chunk->PREV_INUSE = 1;
 }
 
@@ -38,7 +38,7 @@ void* hmalloc(size_t size)
     top_chunk->prev_size = chunk_size;
     top_chunk->size -= chunk_size;
     top_chunk->NON_MAIN_ARENA = 0;
-    top_chunk->IS_MMAPED = 1;
+    top_chunk->IS_MMAPPED = 1;
     top_chunk->PREV_INUSE = 1;
 
     // Fill the new chunk's size
