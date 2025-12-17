@@ -22,32 +22,32 @@ Implementing dynamic memory allocator for learning.
 ## `brk()`:
 - The heap starts at a given (random) address
 - The program break is above the heap, and marks the end of heap memory.
-- We can extend the heap by calling brk().
+- We can extend the heap by calling `brk()` or `sbrk()`.
     - This gives us a new region of contigous uninitialized memory.
-    - This is the default implementation of the heap in `glibc`.
+    - This is the default implementation of the `main_arena` in `glibc`.
 
 ## `mmap()`:
 - `mmap()` allows a user to create a new virtual memory mapping
 - The user can define permissions (RWX)
 - The user can also define important properties:
-    - MAP_PRIVATE: Is this memory private to this process
-    - MAP_SHARED: Is this memory associated with a shared file
-    - MAP_ANONYMOUS: This memory isn't backed by a file and is instead initialized as read only.
+    - `MAP_PRIVATE`: Is this memory private to this process
+    - `MAP_SHARED`: Is this memory associated with a shared file
+    - `MAP_ANONYMOUS`: This memory isn't backed by a file and is instead initialized as read only.
         - Isn't that slow?! We have to zero our memory on first allocation
-        - I don't think so! Since the memory is MAP_PRIVATE it is copy-on-write.
+        - I don't think so! Since the memory is `MAP_PRIVATE` it is copy-on-write.
 
 ## Private (copy-on-write) memory:
 - Property of virtual memory pages
-- Allows the kernel to back all virtual memory pages with the same contents to the same physical page:
+- Allows the kernel to back all virtual memory pages with the same contents by the same physical page:
     - Also called memory deduplication
 - While we're only reading a page this is fine
-- Once we try to write to a deduplicated page now we have an issue where the shared physical page would be corrupted.
-- So we copy it!
+- Once we try to write to a deduplicated page now we have an issue; the shared physical page would be corrupted to any other process being shared with.
+- So, upon attempting to write to this page, the kernel must copy it to a new physical page.
 
 ## chunks
 - The fundamental unit of the heap is a chunk
 - A chunk is what stores your variable length data
-    - It also stores some useful metadata
+    - It also stores some necessary metadata to manage the heap
 
 ```C
 typedef struct {
