@@ -1,4 +1,4 @@
-# Heaping Pile of Crap (HPoC)
+# Heap of Crap (HoC)
 
 Implementing dynamic memory allocator for learning.
 - Below are notes building from a simple allocator to something resembling the `glibc` heap.
