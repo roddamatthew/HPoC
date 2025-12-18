@@ -5,84 +5,11 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 #include "../include/chunk.h"
+#include "../include/utils.h"
 
-static chunk* heap_start = NULL; // for debugging :P
-static chunk* top_chunk = NULL;
-static chunk* free_list = NULL;
-
-// Forward declare all methods
-static void print_chunk(chunk* c);
-void print_free_list();
-void print_heap();
-static void init_allocator();
-static chunk* find_free_chunk(uint64_t size);
-static void pop_free_chunk(chunk* c);
-static bool chunk_in_free_list(chunk* c);
-void* hmalloc(size_t size);
-void hfree(void *ptr);
-
-
-static void print_chunk(chunk* c)
-{
-    printf("chunk @%p:\n\t", c);
-    printf("prev_size: 0x%lx, ", c->prev_size);
-    printf("size: 0x%lx, ", c->size);
-
-    // Print the flags nicely
-    printf("flags: |");
-    if (c->NON_MAIN_ARENA) printf("A");
-    else printf(".");
-    printf("|");
-    if (c->IS_MMAPPED) printf("M");
-    else printf(".");
-    printf("|");
-    if (c->PREV_INUSE) printf("P");
-    else printf(".");
-    printf("|\n");
-
-    if (chunk_in_free_list(c)) {
-        printf("\tis_free: ");
-        printf("fd: %p, ", (void *)c->fd);
-        printf("bk: %p\n", (void *)c->bk);
-    }
-}
-
-void print_free_list()
-{
-    chunk* curr_chunk = free_list;
-    puts("[+]\t--- FREE LIST STATE: ---");
-    while (curr_chunk) {
-        print_chunk(curr_chunk);
-        curr_chunk = (chunk *)curr_chunk->fd;
-    }
-    puts("");
-}
-
-void print_heap()
-{
-    chunk* curr_chunk = heap_start;
-    puts("[+]\t--- HEAP STATE: ---");
-    while (curr_chunk <= top_chunk) {
-        // Print the current chunk
-        print_chunk(curr_chunk);
-        
-        // Check for a corrupted-size chunk
-        if (curr_chunk->size < 16) {
-            perror("[!] curr_chunk->size less than minimum size (16 bytes)!");
-            exit(1);
-        }
-
-        // Just in case...
-        if ((uint64_t)curr_chunk > (uint64_t)heap_start + INITIAL_SIZE) {
-            perror("[!] print_heap() read past the end of the heap!");
-            exit(1);
-        }
-
-        // Move to the next contiguous chunk in memory
-        curr_chunk = nextchunk(curr_chunk);
-    }
-    puts("");
-}
+chunk* heap_start = NULL; // for debugging :P
+chunk* top_chunk = NULL;
+chunk* free_list = NULL;
 
 static void init_allocator()
 {
@@ -157,7 +84,6 @@ static void* allocate_from_top_chunk(size_t chunk_size)
     top_chunk->NON_MAIN_ARENA = 0;
     top_chunk->IS_MMAPPED = 1;
     top_chunk->PREV_INUSE = 1;
-    print_chunk(top_chunk);
 
     // Fill the new chunk's size
     // Other attributes are already set from previous calls
@@ -203,18 +129,6 @@ static chunk* allocate_from_free_list(chunk* free_chunk, size_t new_chunk_size)
     return chunk2mem(free_chunk);
 }
 
-static bool chunk_in_free_list(chunk* c)
-{
-    chunk* curr_chunk = free_list;
-    while (curr_chunk) {
-        if (curr_chunk == c) {
-            return true;
-        }
-        curr_chunk = (chunk*)curr_chunk->fd;
-    }
-    return false;
-}
-
 // Coalesce neighboring free heap chunks to reduce fragmentation
 static void backward_coalesce()
 {
@@ -232,8 +146,8 @@ static void backward_coalesce()
             next_chunk->prev_size = prev_chunk->size;
 
             // Debug :P
-            assert(chunk_in_free_list(prev_chunk));
-            assert(!chunk_in_free_list(curr_chunk));
+            assert(in_free_list(prev_chunk));
+            assert(!in_free_list(curr_chunk));
         }
         curr_chunk = (chunk*)curr_chunk->fd;
     }

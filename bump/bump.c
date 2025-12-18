@@ -2,7 +2,9 @@
 #include <sys/mman.h>
 #include "../include/chunk.h"
 
-static chunk* top_chunk = NULL;
+chunk* heap_start = NULL; // for debugging :P
+chunk* top_chunk = NULL;
+chunk* free_list = NULL;
 
 static void init_allocator()
 {
@@ -12,6 +14,8 @@ static void init_allocator()
         exit(1);
     }
 
+    heap_start = top_chunk; // for debug
+
     // Fill the chunk attributes
     top_chunk->prev_size = 0;
     top_chunk->size = INITIAL_SIZE;
@@ -19,7 +23,6 @@ static void init_allocator()
     top_chunk->IS_MMAPPED = 1;
     top_chunk->PREV_INUSE = 1;
 }
-
 void* hmalloc(size_t size)
 {
     if (!top_chunk) {
@@ -36,7 +39,7 @@ void* hmalloc(size_t size)
     // Bump the top_chunk forward and populate it
     top_chunk = (chunk*)((uint64_t)top_chunk + chunk_size);
     top_chunk->prev_size = chunk_size;
-    top_chunk->size -= chunk_size;
+    top_chunk->size = new_chunk->size - chunk_size;
     top_chunk->NON_MAIN_ARENA = 0;
     top_chunk->IS_MMAPPED = 1;
     top_chunk->PREV_INUSE = 1;

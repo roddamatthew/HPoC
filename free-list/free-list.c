@@ -2,8 +2,9 @@
 #include <sys/mman.h>
 #include "../include/chunk.h"
 
-static chunk* top_chunk = NULL;
-static chunk* free_list = NULL;
+chunk* heap_start = NULL; // for debugging :P
+chunk* top_chunk = NULL;
+chunk* free_list = NULL;
 
 static void init_allocator()
 {
@@ -12,6 +13,8 @@ static void init_allocator()
         perror("Couldn't mmap requested size");
         exit(1);
     }
+
+    heap_start = top_chunk; // for debug
 
     // Fill the chunk attributes
     top_chunk->prev_size = 0;
@@ -73,7 +76,7 @@ static void* allocate_from_top_chunk(size_t chunk_size)
     // Bump the top_chunk forward and populate it
     top_chunk = (chunk*)((uint64_t)top_chunk + chunk_size);
     top_chunk->prev_size = chunk_size;
-    top_chunk->size -= chunk_size;
+    top_chunk->size = new_chunk->size - chunk_size;
     top_chunk->NON_MAIN_ARENA = 0;
     top_chunk->IS_MMAPPED = 1;
     top_chunk->PREV_INUSE = 1;
@@ -141,22 +144,4 @@ void hfree(void* ptr)
 {
     chunk* free_chunk = mem2chunk(ptr);
     free_list_append(free_chunk);
-}
-
-void print_free_list()
-{
-    chunk* curr_chunk = free_list;
-    printf("--- FREE LIST STATE: ---\n");
-    while (curr_chunk) {
-        printf("free chunk @%p\n", curr_chunk);
-        printf("\tprev_size: %lu\n", curr_chunk->prev_size);
-        printf("\tsize: %lu\n", curr_chunk->size);
-        printf("\tNON_MAIN_ARENA: %d\n", curr_chunk->NON_MAIN_ARENA);
-        printf("\tIS_MMAPPED: %d\n", curr_chunk->IS_MMAPPED);
-        printf("\tPREV_INUSE: %d\n", curr_chunk->PREV_INUSE);
-        printf("\tfd: %p\n", (void *)curr_chunk->fd);
-        printf("\tbk: %p\n", (void *)curr_chunk->bk);
-
-        curr_chunk = (chunk *)curr_chunk->fd;
-    }
 }

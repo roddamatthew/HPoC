@@ -1,7 +1,9 @@
-#include "free-list.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
+
+#include "free-list.h"
+#include "../include/utils.h"
 
 int main()
 {

@@ -1,7 +1,9 @@
-#include "bump.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
+
+#include "bump.h"
+#include "../include/utils.h"
 
 int main()
 {
@@ -15,4 +17,6 @@ int main()
 
     assert(ptr1 + 32 == ptr2);
     assert(ptr2 + 48 == ptr3);
+
+    print_heap();
 }
