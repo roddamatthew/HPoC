@@ -5,9 +5,9 @@ Implementing dynamic memory allocator for learning.
 - Each version of the heap is within its own directory:
     - Can build each with `make`
     - Implementations increasing in complexity are:
-        - [bump](bump/)
-        - [free-list](free-list/)
-        - [coal](coal/)
+        - [bump](01-bump/)
+        - [free-list](02-free-list/)
+        - [coal](03-coal/)
 
 # Notes:
 
